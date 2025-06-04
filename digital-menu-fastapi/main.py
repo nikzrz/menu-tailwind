@@ -4,7 +4,8 @@ from PIL import Image
 from transformers import BlipProcessor, BlipForConditionalGeneration
 import requests
 import os
-
+from dotenv import load_dotenv
+load_dotenv()
 
 processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
 model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base")
