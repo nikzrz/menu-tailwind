@@ -5,8 +5,6 @@ from transformers import BlipProcessor, BlipForConditionalGeneration
 import requests
 import os
 
-CALORIE_NINJAS_API_KEY = "hl8MAiIjJ4Xn0/ea5KyAGg==S3hEmeH9AAqiPc5o"
-HF_API_TOKEN = "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"
 
 processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
 model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base")
