@@ -1,6 +1,6 @@
 <template>
-  <div class="min-h-screen w-full bg-gradient-to-br from-dark-bg to-gray-900 flex flex-col items-start p-6">
-    <h2 class="text-4xl font-bold text-white mb-6">Мои рестораны / My Restaurants</h2>
+  <div class="min-h-screen w-full bg-white flex flex-col items-start p-6">
+    <h2 class="text-4xl font-bold text-gray-900 mb-6">Мои рестораны / My Restaurants</h2>
     <div class="w-full max-w-6xl space-y-6 mx-auto">
       <!-- Ошибка загрузки -->
       <div v-if="error" class="text-red-400 text-center">{{ error }}</div>
@@ -13,7 +13,7 @@
         <div
           v-for="rest in restaurants"
           :key="rest.id"
-          class="bg-card-dark rounded-xl px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between shadow"
+          class="bg-gray-50 rounded-xl px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between shadow"
         >
           <!-- Информация о ресторане -->
           <div class="flex items-center w-full sm:w-auto mb-4 sm:mb-0">
@@ -24,27 +24,27 @@
               class="rest-photo"
             />
             <div>
-              <div class="text-2xl font-bold text-white">{{ rest.name }}</div>
-              <div class="text-gray-400 text-sm">{{ rest.address }}</div>
+              <div class="text-2xl font-bold text-gray-900">{{ rest.name }}</div>
+              <div class="text-gray-500 text-sm">{{ rest.address }}</div>
             </div>
           </div>
 
           <!-- Кнопки действий -->
           <div class="flex flex-wrap gap-2 w-full sm:w-auto">
             <button
-              class="btn"
+              class="btn bg-blue-600 hover:bg-blue-500 text-white"
               @click="openEditRestaurant(rest.id)"
             >
               Редактировать / Edit
             </button>
             <button
-              class="btn"
+              class="btn bg-green-600 hover:bg-green-500 text-white"
               @click="goToMenu(rest)"
             >
               Меню / Menu
             </button>
             <button
-              class="btn"
+              class="btn bg-yellow-600 hover:bg-yellow-500 text-white"
               @click="openAddDish(rest.id)"
             >
               Добавить блюдо / Add Dish
@@ -56,7 +56,7 @@
               Удалить / Delete
             </button>
             <button
-              class="btn bg-blue-600 hover:bg-blue-500 text-white"
+              class="btn bg-purple-600 hover:bg-purple-500 text-white"
               @click="openSettings(rest.id)"
             >
               Настройки / Settings
@@ -66,7 +66,7 @@
       </div>
 
       <!-- Когда нет ресторанов -->
-      <div v-if="restaurants.length === 0 && !loading" class="text-gray-400 text-center">
+      <div v-if="restaurants.length === 0 && !loading" class="text-gray-500 text-center">
         Нет ресторанов / No restaurants
       </div>
 
@@ -74,7 +74,7 @@
       <div class="flex justify-center">
         <button
           v-if="!loading"
-          class="mt-8 btn w-full max-w-sm"
+          class="mt-8 btn bg-green-600 hover:bg-green-500 text-white w-full max-w-sm"
           @click="showAdd = true"
         >
           + Добавить ресторан / + Add Restaurant
@@ -82,19 +82,19 @@
       </div>
 
       <!-- Загрузка -->
-      <div v-if="loading" class="text-center text-yellow-400">Загрузка... / Loading...</div>
+      <div v-if="loading" class="text-center text-yellow-600">Загрузка... / Loading...</div>
     </div>
 
     <!-- Модалка добавления ресторана -->
     <div v-if="showAdd" class="fixed inset-0 flex items-center justify-center bg-black/70 z-50">
-      <div class="bg-card-dark p-6 rounded-2xl w-full max-w-md shadow-lg relative">
+      <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-lg relative">
         <button
           @click="showAdd = false"
-          class="absolute top-2 right-3 text-2xl text-gray-400 hover:text-white"
+          class="absolute top-2 right-3 text-2xl text-gray-400 hover:text-gray-600"
         >
           ×
         </button>
-        <h3 class="text-2xl font-bold mb-4 text-white">Добавить ресторан / Add Restaurant</h3>
+        <h3 class="text-2xl font-bold mb-4 text-gray-900">Добавить ресторан / Add Restaurant</h3>
         <form @submit.prevent="onAddRestaurant" class="flex flex-col gap-3">
           <input
             v-model="newName"
@@ -119,7 +119,7 @@
           />
           <button
             type="submit"
-            class="btn w-full"
+            class="btn bg-green-600 hover:bg-green-500 text-white w-full"
             :disabled="loadingAdd"
           >
             {{ loadingAdd ? 'Добавляем...' : 'Добавить' }}
@@ -133,16 +133,16 @@
     <!-- Модалка добавления блюда -->
     <div v-if="showAddDish" class="fixed inset-0 flex items-center justify-center bg-black/70 z-50">
       <div
-        class="bg-card-dark p-6 rounded-2xl w-full max-w-md shadow-lg relative overflow-y-auto"
+        class="bg-white p-6 rounded-2xl w-full max-w-md shadow-lg relative overflow-y-auto"
         style="max-height: 80vh;"
       >
         <button
           @click="showAddDish = false"
-          class="absolute top-2 right-3 text-2xl text-gray-400 hover:text-white"
+          class="absolute top-2 right-3 text-2xl text-gray-400 hover:text-gray-600"
         >
           ×
         </button>
-        <h3 class="text-2xl font-bold mb-4 text-white">
+        <h3 class="text-2xl font-bold mb-4 text-gray-900">
           Добавить блюдо для {{ selectedRestaurantName }} / Add Dish for
           {{ selectedRestaurantName }}
         </h3>
@@ -212,7 +212,7 @@
             class="input mb-2"
             accept="image/*"
           />
-          <div v-if="loadingAI" class="text-yellow-400 text-sm mb-2">
+          <div v-if="loadingAI" class="text-yellow-600 text-sm mb-2">
             AI анализирует фото... / AI analyzing photo...
           </div>
           <div v-if="errorAI" class="text-red-400 text-sm mb-2">{{ errorAI }}</div>
@@ -246,7 +246,7 @@
           />
           <button
             type="submit"
-            class="btn w-full"
+            class="btn bg-green-600 hover:bg-green-500 text-white w-full"
             :disabled="loadingAI"
           >
             Добавить / Add
@@ -258,31 +258,31 @@
     <!-- Модалка редактирования блюд -->
     <div v-if="showEdit" class="fixed inset-0 flex items-center justify-center bg-black/70 z-50">
       <div
-        class="bg-card-dark p-6 rounded-2xl w-full max-w-2xl shadow-lg relative overflow-y-auto"
+        class="bg-white p-6 rounded-2xl w-full max-w-2xl shadow-lg relative overflow-y-auto"
         style="max-height: 80vh;"
       >
         <button
           @click="showEdit = false"
-          class="absolute top-2 right-3 text-2xl text-gray-400 hover:text-white"
+          class="absolute top-2 right-3 text-2xl text-gray-400 hover:text-gray-600"
         >
           ×
         </button>
-        <h3 class="text-2xl font-bold mb-4 text-white">
+        <h3 class="text-2xl font-bold mb-4 text-gray-900">
           Редактировать блюда для {{ selectedRestaurantName }} / Edit Dishes for
           {{ selectedRestaurantName }}
         </h3>
-        <div v-if="loadingEdit" class="text-yellow-400 text-center mb-4">
+        <div v-if="loadingEdit" class="text-yellow-600 text-center mb-4">
           Загрузка блюд... / Loading dishes...
         </div>
         <div v-if="errorEdit" class="text-red-400 text-center mb-4">{{ errorEdit }}</div>
         <div
           v-if="dishes.length === 0 && !loadingEdit"
-          class="text-gray-400 text-center mb-4"
+          class="text-gray-500 text-center mb-4"
         >
           Нет блюд для редактирования (restaurant_id: {{ selectedRestaurantId }})
           / No dishes to edit (restaurant_id: {{ selectedRestaurantId }})
         </div>
-        <div v-for="(dish, index) in dishes" :key="dish.id" class="mb-6 p-4 bg-dark-bg rounded-lg">
+        <div v-for="(dish, index) in dishes" :key="dish.id" class="mb-6 p-4 bg-gray-50 rounded-lg">
           <input
             v-model="dish.name_en"
             type="text"
@@ -378,7 +378,7 @@
           />
           <button
             @click="saveDishChanges(dish, index)"
-            class="btn w-full"
+            class="btn bg-blue-600 hover:bg-blue-500 text-white w-full"
           >
             Сохранить / Save
           </button>
@@ -389,60 +389,60 @@
     <!-- Модалка настроек ресторана -->
     <div v-if="showSettings" class="fixed inset-0 flex items-center justify-center bg-black/70 z-50">
       <div
-        class="bg-card-dark p-6 rounded-2xl w-full max-w-5xl shadow-lg relative overflow-y-auto"
+        class="bg-white p-6 rounded-2xl w-full max-w-5xl shadow-lg relative overflow-y-auto"
         style="max-height: 90vh;"
       >
         <button
           @click="closeSettings"
-          class="absolute top-2 right-3 text-2xl text-gray-400 hover:text-white"
+          class="absolute top-2 right-3 text-2xl text-gray-400 hover:text-gray-600"
         >
           ×
         </button>
-        <h3 class="text-3xl font-bold mb-6 text-white">
+        <h3 class="text-3xl font-bold mb-6 text-gray-900">
           Настройки "{{ settingsName }}" / Settings for "{{ settingsName }}"
         </h3>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <!-- Левая колонка -->
           <div class="space-y-6">
             <!-- Карточка "Клиентов сегодня" -->
-            <div class="bg-dark-bg rounded-lg p-4">
-              <div class="text-xl font-semibold text-white mb-2">Клиентов сегодня</div>
-              <div class="text-4xl font-bold text-yellow-400">{{ clientsToday }}</div>
-              <div class="text-gray-400 text-sm">Клиентов сегодня</div>
+            <div class="bg-gray-50 rounded-lg p-4">
+              <div class="text-xl font-semibold text-gray-900 mb-2">Клиентов сегодня</div>
+              <div class="text-4xl font-bold text-yellow-600">{{ clientsToday }}</div>
+              <div class="text-gray-500 text-sm">Клиентов сегодня</div>
             </div>
 
             <!-- Карточка "Общая сумма заказов за сегодня" -->
-            <div class="bg-dark-bg rounded-lg p-4">
-              <div class="text-xl font-semibold text-white mb-2">Общая сумма заказов за сегодня</div>
-              <div class="text-4xl font-bold text-yellow-400">{{ totalSumToday }} ₽</div>
-              <div class="text-gray-400 text-sm">{{ averageCheck }} ₽ / средний чек</div>
+            <div class="bg-gray-50 rounded-lg p-4">
+              <div class="text-xl font-semibold text-gray-900 mb-2">Общая сумма заказов за сегодня</div>
+              <div class="text-4xl font-bold text-yellow-600">{{ totalSumToday }} ₽</div>
+              <div class="text-gray-500 text-sm">{{ averageCheck }} ₽ / средний чек</div>
             </div>
 
             <!-- Карточка "Список клиентов/столов" -->
-            <div class="bg-dark-bg rounded-lg p-4 overflow-x-auto">
-              <div class="text-xl font-semibold text-white mb-2">Список клиентов/столов</div>
-              <table class="w-full table-auto text-left text-white">
+            <div class="bg-gray-50 rounded-lg p-4 overflow-x-auto">
+              <div class="text-xl font-semibold text-gray-900 mb-2">Список клиентов/столов</div>
+              <table class="w-full table-auto text-left">
                 <thead>
-                  <tr class="border-b border-gray-700">
-                    <th class="py-2 px-1">ID клиента</th>
-                    <th class="py-2 px-1">Номер стола</th>
-                    <th class="py-2 px-1">Статус</th>
-                    <th class="py-2 px-1">Сумма</th>
+                  <tr class="border-b border-gray-200">
+                    <th class="py-2 px-1 text-gray-900">ID клиента</th>
+                    <th class="py-2 px-1 text-gray-900">Номер стола</th>
+                    <th class="py-2 px-1 text-gray-900">Статус</th>
+                    <th class="py-2 px-1 text-gray-900">Сумма</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr
                     v-for="client in clientsList"
                     :key="client.id"
-                    class="border-b border-gray-800"
+                    class="border-b border-gray-100"
                   >
-                    <td class="py-2 px-1">{{ client.id }}</td>
-                    <td class="py-2 px-1">{{ client.table }}</td>
-                    <td class="py-2 px-1">{{ client.status }}</td>
-                    <td class="py-2 px-1">{{ client.sum }} ₽</td>
+                    <td class="py-2 px-1 text-gray-700">{{ client.id }}</td>
+                    <td class="py-2 px-1 text-gray-700">{{ client.table }}</td>
+                    <td class="py-2 px-1 text-gray-700">{{ client.status }}</td>
+                    <td class="py-2 px-1 text-gray-700">{{ client.sum }} ₽</td>
                   </tr>
                   <tr v-if="clientsList.length === 0">
-                    <td colspan="4" class="py-2 text-gray-400 text-center">
+                    <td colspan="4" class="py-2 text-gray-500 text-center">
                       Нет данных / No data
                     </td>
                   </tr>
@@ -451,27 +451,27 @@
             </div>
 
             <!-- Карточка "Рейтинг блюд" -->
-            <div class="bg-dark-bg rounded-lg p-4">
-              <div class="text-xl font-semibold text-white mb-2">Рейтинг блюд</div>
+            <div class="bg-gray-50 rounded-lg p-4">
+              <div class="text-xl font-semibold text-gray-900 mb-2">Рейтинг блюд</div>
               <div class="flex flex-col space-y-2">
-                <label class="flex items-center text-white">
+                <label class="flex items-center text-gray-700">
                   <input
                     type="checkbox"
-                    class="mr-2 accent-yellow-400"
+                    class="mr-2 accent-yellow-600"
                     v-model="settings.showDishRating"
                   />
                   Отображать/не отображать
                 </label>
                 <button
                   @click="resetAllDishRatings"
-                  class="btn w-full bg-red-600 hover:bg-red-500 text-white mt-2"
+                  class="btn bg-red-600 hover:bg-red-500 text-white mt-2"
                 >
                   Сбросить рейтинг всех блюд / Reset all dish ratings
                 </button>
-                <label class="flex items-center text-white mt-2">
+                <label class="flex items-center text-gray-700 mt-2">
                   <input
                     type="checkbox"
-                    class="mr-2 accent-yellow-400"
+                    class="mr-2 accent-yellow-600"
                     v-model="settings.showDishConfigurator"
                   />
                   Отображать конфигуратор блюд / Show dish configurator
@@ -480,13 +480,13 @@
             </div>
 
             <!-- Карточка "Настройки меню" -->
-            <div class="bg-dark-bg rounded-lg p-4">
-              <div class="text-xl font-semibold text-white mb-2">Настройки меню</div>
-              <div class="flex flex-col space-y-2 text-white">
+            <div class="bg-gray-50 rounded-lg p-4">
+              <div class="text-xl font-semibold text-gray-900 mb-2">Настройки меню</div>
+              <div class="flex flex-col space-y-2 text-gray-700">
                 <label class="flex items-center">
                   <input
                     type="checkbox"
-                    class="mr-2 accent-yellow-400"
+                    class="mr-2 accent-yellow-600"
                     v-model="settings.displayKBFU"
                   />
                   отображать КБЖУ
@@ -494,7 +494,7 @@
                 <label class="flex items-center">
                   <input
                     type="checkbox"
-                    class="mr-2 accent-yellow-400"
+                    class="mr-2 accent-yellow-600"
                     v-model="settings.displayCookTime"
                   />
                   отображать время готовки
@@ -502,7 +502,7 @@
                 <label class="flex items-center">
                   <input
                     type="checkbox"
-                    class="mr-2 accent-yellow-400"
+                    class="mr-2 accent-yellow-600"
                     v-model="settings.displayWeight"
                   />
                   отображать вес
@@ -510,20 +510,20 @@
                 <label class="flex items-center">
                   <input
                     type="checkbox"
-                    class="mr-2 accent-yellow-400"
+                    class="mr-2 accent-yellow-600"
                     v-model="settings.displayNutritionalValue"
                   />
                   отображать пищ. ценность
                 </label>
                 <button
                   @click="deleteMenu"
-                  class="btn w-full bg-red-600 hover:bg-red-500 text-white mt-2"
+                  class="btn bg-red-600 hover:bg-red-500 text-white mt-2"
                 >
                   удалить меню / Delete menu
                 </button>
                 <button
                   @click="scanPrintedMenu"
-                  class="btn w-full bg-blue-600 hover:bg-blue-500 text-white mt-2"
+                  class="btn bg-blue-600 hover:bg-blue-500 text-white mt-2"
                 >
                   отсканировать печатное меню / Scan printed menu
                 </button>
@@ -534,20 +534,20 @@
           <!-- Правая колонка -->
           <div class="space-y-6">
             <!-- Карточка "Постоянные клиенты" -->
-            <div class="bg-dark-bg rounded-lg p-4">
-              <div class="text-xl font-semibold text-white mb-2">Постоянные клиенты</div>
+            <div class="bg-gray-50 rounded-lg p-4">
+              <div class="text-xl font-semibold text-gray-900 mb-2">Постоянные клиенты</div>
               <div class="flex items-center space-x-2 mb-2">
-                <span class="text-white">Информировать о постоянных клиентах:</span>
+                <span class="text-gray-700">Информировать о постоянных клиентах:</span>
                 <button
                   @click="settings.loyalEnabled = true"
-                  :class="settings.loyalEnabled ? 'bg-yellow-400 text-black' : 'bg-gray-600 text-white'"
+                  :class="settings.loyalEnabled ? 'bg-yellow-600 text-white' : 'bg-gray-200 text-gray-700'"
                   class="px-3 py-1 rounded-lg"
                 >
                   Да
                 </button>
                 <button
                   @click="settings.loyalEnabled = false"
-                  :class="!settings.loyalEnabled ? 'bg-yellow-400 text-black' : 'bg-gray-600 text-white'"
+                  :class="!settings.loyalEnabled ? 'bg-yellow-600 text-white' : 'bg-gray-200 text-gray-700'"
                   class="px-3 py-1 rounded-lg"
                 >
                   Нет
@@ -562,7 +562,7 @@
                     placeholder="X визитов"
                     class="input w-1/2"
                   />
-                  <span class="text-gray-400">/</span>
+                  <span class="text-gray-500">/</span>
                   <input
                     v-model.number="settings.loyalSum"
                     type="number"
@@ -573,7 +573,7 @@
                 </div>
                 <button
                   @click="saveSettings"
-                  class="btn w-full bg-green-600 hover:bg-green-500 text-white mt-2"
+                  class="btn bg-green-600 hover:bg-green-500 text-white mt-2"
                 >
                   Сохранить настройки / Save Settings
                 </button>
@@ -581,9 +581,9 @@
             </div>
 
             <!-- Карточка "Меню и управление блюдами" -->
-            <div class="bg-dark-bg rounded-lg p-4">
+            <div class="bg-gray-50 rounded-lg p-4">
               <div class="flex items-center justify-between mb-2">
-                <div class="text-xl font-semibold text-white">Меню и управление блюдами</div>
+                <div class="text-xl font-semibold text-gray-900">Меню и управление блюдами</div>
                 <button
                   class="btn bg-blue-600 hover:bg-blue-500 text-white text-sm"
                   @click="openAddDish(settingsRestaurantId)"
@@ -600,7 +600,7 @@
                 />
                 <button
                   @click="addCategory"
-                  class="btn w-full bg-blue-600 hover:bg-blue-500 text-white"
+                  class="btn bg-blue-600 hover:bg-blue-500 text-white"
                 >
                   + Добавить категорию / + Add category
                 </button>
@@ -608,19 +608,19 @@
             </div>
 
             <!-- Карточка "Аналитика" -->
-            <div class="bg-dark-bg rounded-lg p-4">
-              <div class="text-xl font-semibold text-white mb-2">Апрель 2024 / April 2024</div>
+            <div class="bg-gray-50 rounded-lg p-4">
+              <div class="text-xl font-semibold text-gray-900 mb-2">Апрель 2024 / April 2024</div>
               <div class="overflow-x-auto">
-                <table class="w-full table-auto text-left text-white">
+                <table class="w-full table-auto text-left">
                   <thead>
-                    <tr class="border-b border-gray-700">
-                      <th class="py-2 px-1">Пн</th>
-                      <th class="py-2 px-1">Вт</th>
-                      <th class="py-2 px-1">Ср</th>
-                      <th class="py-2 px-1">Чт</th>
-                      <th class="py-2 px-1">Пт</th>
-                      <th class="py-2 px-1">Сб</th>
-                      <th class="py-2 px-1">Вс</th>
+                    <tr class="border-b border-gray-200">
+                      <th class="py-2 px-1 text-gray-900">Пн</th>
+                      <th class="py-2 px-1 text-gray-900">Вт</th>
+                      <th class="py-2 px-1 text-gray-900">Ср</th>
+                      <th class="py-2 px-1 text-gray-900">Чт</th>
+                      <th class="py-2 px-1 text-gray-900">Пт</th>
+                      <th class="py-2 px-1 text-gray-900">Сб</th>
+                      <th class="py-2 px-1 text-gray-900">Вс</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -628,10 +628,10 @@
                       <td
                         v-for="day in week"
                         :key="day.date"
-                        class="py-2 px-1 align-top h-28 border-b border-gray-800"
+                        class="py-2 px-1 align-top h-28 border-b border-gray-100"
                       >
-                        <div class="text-white">{{ day.day }}</div>
-                        <div class="text-yellow-400 font-bold text-sm mt-1">{{ day.sum }} ₽</div>
+                        <div class="text-gray-900">{{ day.day }}</div>
+                        <div class="text-yellow-600 font-bold text-sm mt-1">{{ day.sum }} ₽</div>
                       </td>
                     </tr>
                   </tbody>
@@ -640,11 +640,11 @@
             </div>
 
             <!-- Карточка "Брендирование" -->
-            <div class="bg-dark-bg rounded-lg p-4">
-              <div class="text-xl font-semibold text-white mb-2">Брендирование</div>
+            <div class="bg-gray-50 rounded-lg p-4">
+              <div class="text-xl font-semibold text-gray-900 mb-2">Брендирование</div>
               <div class="flex flex-col space-y-4">
                 <div>
-                  <label class="text-white mb-1 block">Логотип заведения / Restaurant Logo:</label>
+                  <label class="text-gray-700 mb-1 block">Логотип заведения / Restaurant Logo:</label>
                   <input
                     type="file"
                     @change="onLogoChange"
@@ -656,7 +656,7 @@
                   <img
                     :src="settings.brandLogoUrl"
                     alt="Logo Preview"
-                    class="w-24 h-24 object-contain bg-dark-bg rounded-lg"
+                    class="w-24 h-24 object-contain bg-gray-50 rounded-lg"
                   />
                   <button
                     @click="removeLogo"
@@ -667,7 +667,7 @@
                 </div>
                 <button
                   @click="uploadLogo"
-                  class="btn w-full bg-green-600 hover:bg-green-500 text-white"
+                  class="btn bg-green-600 hover:bg-green-500 text-white"
                 >
                   Загрузить логотип / Upload Logo
                 </button>
@@ -751,9 +751,7 @@ const clientsToday = ref(0)
 const totalSumToday = ref(0)
 const averageCheck = ref(0)
 const clientsList = ref([])
-const analyticsCalendar = ref([]) // массив недель, где каждая неделя — массив объектов { date, day, sum }
-
-// Новый функционал меню и категорий
+const analyticsCalendar = ref([])
 const newCategory = ref('')
 
 // Получить публичный URL фото ресторана
@@ -822,7 +820,6 @@ async function onAddRestaurant() {
       address: newAddress.value,
       owner_id: userId,
       photo_path: photoUrl,
-      // инициализация новых полей настроек (по желанию)
       loyal_enabled: false,
       loyal_visits: 0,
       loyal_sum: 0,
@@ -1047,7 +1044,6 @@ async function openSettings(restaurantId) {
   settingsName.value = restaurant.name
   loadingEdit.value = true
   try {
-    // Получаем расширенные поля из таблицы restaurants (предполагая, что они есть)
     const { data, error: fetchError } = await supabase
       .from('restaurants')
       .select(`
@@ -1066,7 +1062,6 @@ async function openSettings(restaurantId) {
       .single()
     if (fetchError) throw fetchError
 
-    // Устанавливаем в refs
     settings.value.loyalEnabled = data.loyal_enabled
     settings.value.loyalVisits = data.loyal_visits
     settings.value.loyalSum = data.loyal_sum
@@ -1081,7 +1076,6 @@ async function openSettings(restaurantId) {
     console.warn('Не удалось загрузить настройки:', err.message)
   } finally {
     loadingEdit.value = false
-    // Загружаем данные для карточек аналитики и клиентов (stub: здесь можно добавить вызовы API)
     loadClientsData(restaurantId)
     loadAnalyticsData(restaurantId)
     showSettings.value = true
@@ -1131,7 +1125,7 @@ async function saveSettings() {
   }
 }
 
-// Сбросить рейтинг всех блюд (для данного ресторана)
+// Сбросить рейтинг всех блюд
 async function resetAllDishRatings() {
   const confirmReset = confirm('Вы уверены, что хотите сбросить рейтинг всех блюд? / Are you sure you want to reset all dish ratings?')
   if (!confirmReset) return
@@ -1148,20 +1142,18 @@ async function resetAllDishRatings() {
   }
 }
 
-// Удалить меню (stub)
+// Удалить меню
 function deleteMenu() {
   alert('Функция удаления меню пока не реализована / Delete menu not implemented yet')
 }
 
-// Отсканировать печатное меню (stub)
+// Отсканировать печатное меню
 function scanPrintedMenu() {
   alert('Функция сканирования печатного меню пока не реализована / Scan printed menu not implemented yet')
 }
 
-// Загрузка списка клиентов и их данных (stub)
+// Загрузка списка клиентов и их данных
 function loadClientsData(restaurantId) {
-  // Здесь можно вызвать API или запрос к базе, чтобы получить clientsToday, totalSumToday, averageCheck, clientsList
-  // Пока что делаем заглушки:
   clientsToday.value = 32
   totalSumToday.value = 102400
   averageCheck.value = 3200
@@ -1173,14 +1165,12 @@ function loadClientsData(restaurantId) {
   ]
 }
 
-// Загрузка данных аналитики (stub)
+// Загрузка данных аналитики
 function loadAnalyticsData(restaurantId) {
-  // Формируем простой календарь на апрель 2024
   const april = []
-  const start = new Date(2024, 3, 1) // месяца 0-based: апрель = 3
-  // Начинаем с понедельника предыдущей недели
+  const start = new Date(2024, 3, 1)
   const startDay = new Date(start)
-  const dayOfWeek = startDay.getDay() || 7 // воскресенье => 7
+  const dayOfWeek = startDay.getDay() || 7
   startDay.setDate(startDay.getDate() - (dayOfWeek - 1))
 
   for (let w = 0; w < 5; w++) {
@@ -1192,7 +1182,6 @@ function loadAnalyticsData(restaurantId) {
       const day = date.getDate()
       let sum = ''
       if (month === 3) {
-        // Для демонстрации устанавливаем случайные суммы
         sum = Math.floor(Math.random() * 100000 / 100) * 100
       }
       week.push({
@@ -1211,7 +1200,6 @@ function onLogoChange(e) {
   const file = e.target.files[0]
   if (!file) return
   settings.value.brandLogoFile = file
-  // Показ превью сразу после выбора
   settings.value.brandLogoUrl = URL.createObjectURL(file)
 }
 
@@ -1234,7 +1222,6 @@ async function uploadLogo() {
     const { publicUrl } = supabase.storage.from('restaurants').getPublicUrl(filePath).data
     settings.value.brandLogoUrl = publicUrl
 
-    // Сохраняем URL в базе
     const { error: updateError } = await supabase
       .from('restaurants')
       .update({ brand_logo_url: publicUrl })
@@ -1247,15 +1234,13 @@ async function uploadLogo() {
   }
 }
 
-// Удалить логотип (stub)
+// Удалить логотип
 async function removeLogo() {
   if (!settings.value.brandLogoUrl) return
   const confirmRemove = confirm('Удалить логотип? / Remove logo?')
   if (!confirmRemove) return
 
   try {
-    // Предполагаем, что путь известен (можно его хранить отдельно)
-    // Для простоты просто очищаем поле в базе
     const { error: updateError } = await supabase
       .from('restaurants')
       .update({ brand_logo_url: null })
@@ -1270,18 +1255,12 @@ async function removeLogo() {
   }
 }
 
-// Открытие модалки настроек ресторана (alias)
-function openSettingsAlias(id) {
-  openSettings(id)
-}
-
-// Добавление категории меню (stub)
+// Добавление категории меню
 function addCategory() {
   if (!newCategory.value.trim()) {
     alert('Введите название категории / Please enter a category name')
     return
   }
-  // Здесь можно сделать вставку новой категории в БД
   alert(`Категория "${newCategory.value}" добавлена / Category "${newCategory.value}" added`)
   newCategory.value = ''
 }
@@ -1289,23 +1268,17 @@ function addCategory() {
 
 <style scoped>
 .btn {
-  @apply bg-yandex-yellow text-black font-bold rounded-xl py-2 px-4 hover:bg-yellow-400 transition shadow;
+  @apply font-bold rounded-xl py-2 px-4 transition shadow;
 }
 .input {
-  @apply bg-dark-bg text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yandex-yellow/50 transition;
-}
-.bg-card-dark {
-  background: #232325;
-}
-.bg-dark-bg {
-  background: #19191b;
+  @apply bg-gray-50 text-gray-900 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 transition border border-gray-200;
 }
 .rest-photo {
   width: 60px;
   height: 60px;
   object-fit: cover;
   border-radius: 14px;
-  background: #232325;
+  background: #f3f4f6;
   margin-right: 16px;
 }
 </style>
