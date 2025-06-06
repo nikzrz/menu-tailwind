@@ -1,678 +1,549 @@
 <template>
-  <div class="min-h-screen w-full bg-white flex flex-col items-start p-6">
-    <h2 class="text-4xl font-bold text-gray-900 mb-6">Мои рестораны / My Restaurants</h2>
-    <div class="w-full max-w-6xl space-y-6 mx-auto">
-      <!-- Ошибка загрузки -->
-      <div v-if="error" class="text-red-400 text-center">{{ error }}</div>
-
-      <!-- Список ресторанов -->
-      <div
-        v-if="restaurants.length > 0 && !loading"
-        class="space-y-4"
-      >
-        <div
-          v-for="rest in restaurants"
-          :key="rest.id"
-          class="bg-gray-50 rounded-xl px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between shadow"
-        >
-          <!-- Информация о ресторане -->
-          <div class="flex items-center w-full sm:w-auto mb-4 sm:mb-0">
-            <img
-              v-if="rest.photo_path"
-              :src="getRestaurantPhoto(rest.photo_path)"
-              alt="Фото ресторана"
-              class="rest-photo"
-            />
-            <div>
-              <div class="text-2xl font-bold text-gray-900">{{ rest.name }}</div>
-              <div class="text-gray-500 text-sm">{{ rest.address }}</div>
-            </div>
+  <div class="min-h-screen w-full bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-40">
+      <div class="max-w-7xl mx-auto px-6 py-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900">{{ t('adminDashboard') }}</h1>
+            <p class="text-gray-600 mt-1">{{ t('manageRestaurants') }}</p>
           </div>
+          
+          <div class="flex items-center gap-4">
+            <!-- Language Selector -->
+            <div class="relative">
+              <button
+                @click="showLangDropdown = !showLangDropdown"
+                class="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/>
+                </svg>
+                <span class="text-sm text-gray-700">{{ getCurrentLanguageLabel() }}</span>
+                <svg class="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </button>
+              
+              <div v-if="showLangDropdown" class="absolute right-0 top-full mt-2 bg-white border border-gray-300 rounded-lg shadow-lg min-w-[140px] z-50">
+                <button
+                  v-for="lang in languages"
+                  :key="lang.code"
+                  @click="selectLanguage(lang.code)"
+                  :class="[
+                    'w-full text-left px-3 py-2 hover:bg-gray-50 transition-colors first:rounded-t-lg last:rounded-b-lg text-sm',
+                    currentLanguage === lang.code ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+                  ]"
+                >
+                  {{ lang.label }}
+                </button>
+              </div>
+            </div>
 
-          <!-- Кнопки действий -->
-          <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+            <!-- Add Restaurant Button -->
             <button
-              class="btn bg-blue-600 hover:bg-blue-500 text-white"
-              @click="openEditRestaurant(rest.id)"
+              @click="showAdd = true"
+              class="btn-primary flex items-center gap-2"
             >
-              Редактировать / Edit
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+              </svg>
+              {{ t('addRestaurant') }}
             </button>
+
+            <!-- Logout Button -->
             <button
-              class="btn bg-green-600 hover:bg-green-500 text-white"
-              @click="goToMenu(rest)"
+              @click="logout"
+              class="btn-secondary flex items-center gap-2"
             >
-              Меню / Menu
-            </button>
-            <button
-              class="btn bg-yellow-600 hover:bg-yellow-500 text-white"
-              @click="openAddDish(rest.id)"
-            >
-              Добавить блюдо / Add Dish
-            </button>
-            <button
-              class="btn bg-red-600 hover:bg-red-500 text-white"
-              @click="deleteRestaurant(rest.id)"
-            >
-              Удалить / Delete
-            </button>
-            <button
-              class="btn bg-purple-600 hover:bg-purple-500 text-white"
-              @click="openSettings(rest.id)"
-            >
-              Настройки / Settings
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+              </svg>
+              {{ t('logout') }}
             </button>
           </div>
         </div>
       </div>
+    </header>
 
-      <!-- Когда нет ресторанов -->
-      <div v-if="restaurants.length === 0 && !loading" class="text-gray-500 text-center">
-        Нет ресторанов / No restaurants
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-6 py-8">
+      <!-- Error Message -->
+      <div v-if="error" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+        <p class="text-red-700">{{ error }}</p>
       </div>
 
-      <!-- Кнопка добавить ресторан -->
-      <div class="flex justify-center">
-        <button
-          v-if="!loading"
-          class="mt-8 btn bg-green-600 hover:bg-green-500 text-white w-full max-w-sm"
-          @click="showAdd = true"
+      <!-- Loading State -->
+      <div v-if="loading" class="flex items-center justify-center py-12">
+        <div class="flex items-center gap-3">
+          <svg class="animate-spin h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+          </svg>
+          <span class="text-gray-600">{{ t('loading') }}</span>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div v-else-if="restaurants.length === 0" class="text-center py-12">
+        <div class="max-w-md mx-auto">
+          <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+          </svg>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">{{ t('noRestaurants') }}</h3>
+          <p class="text-gray-600 mb-6">{{ t('noRestaurantsDesc') }}</p>
+          <button @click="showAdd = true" class="btn-primary">
+            {{ t('addFirstRestaurant') }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Restaurants Grid -->
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div
+          v-for="restaurant in restaurants"
+          :key="restaurant.id"
+          class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
         >
-          + Добавить ресторан / + Add Restaurant
-        </button>
+          <!-- Restaurant Image -->
+          <div class="h-48 bg-gray-100 relative">
+            <img
+              v-if="restaurant.photo_path"
+              :src="getRestaurantPhoto(restaurant.photo_path)"
+              :alt="restaurant.name"
+              class="w-full h-full object-cover"
+            />
+            <div v-else class="w-full h-full flex items-center justify-center">
+              <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Restaurant Info -->
+          <div class="p-6">
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">{{ restaurant.name }}</h3>
+            <p class="text-gray-600 mb-4">{{ restaurant.address }}</p>
+
+            <!-- Action Buttons -->
+            <div class="grid grid-cols-2 gap-2">
+              <button
+                @click="openEditRestaurant(restaurant.id)"
+                class="btn-secondary text-sm"
+              >
+                {{ t('editDishes') }}
+              </button>
+              <button
+                @click="goToMenu(restaurant)"
+                class="btn-success text-sm"
+              >
+                {{ t('viewMenu') }}
+              </button>
+              <button
+                @click="openAddDish(restaurant.id)"
+                class="btn-warning text-sm"
+              >
+                {{ t('addDish') }}
+              </button>
+              <button
+                @click="openSettings(restaurant.id)"
+                class="btn-info text-sm"
+              >
+                {{ t('settings') }}
+              </button>
+            </div>
+
+            <!-- Delete Button -->
+            <button
+              @click="deleteRestaurant(restaurant.id)"
+              class="btn-danger w-full mt-3 text-sm"
+            >
+              {{ t('deleteRestaurant') }}
+            </button>
+          </div>
+        </div>
       </div>
+    </main>
 
-      <!-- Загрузка -->
-      <div v-if="loading" class="text-center text-yellow-600">Загрузка... / Loading...</div>
-    </div>
-
-    <!-- Модалка добавления ресторана -->
-    <div v-if="showAdd" class="fixed inset-0 flex items-center justify-center bg-black/70 z-50">
-      <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-lg relative">
+    <!-- Add Restaurant Modal -->
+    <div v-if="showAdd" class="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+      <div class="bg-white p-8 rounded-2xl w-full max-w-md shadow-xl relative mx-4">
         <button
           @click="showAdd = false"
-          class="absolute top-2 right-3 text-2xl text-gray-400 hover:text-gray-600"
+          class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
         >
-          ×
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
         </button>
-        <h3 class="text-2xl font-bold mb-4 text-gray-900">Добавить ресторан / Add Restaurant</h3>
-        <form @submit.prevent="onAddRestaurant" class="flex flex-col gap-3">
-          <input
-            v-model="newName"
-            type="text"
-            placeholder="Название / Name"
-            class="input"
-            required
-          />
-          <input
-            v-model="newAddress"
-            type="text"
-            placeholder="Адрес / Address"
-            class="input"
-            required
-          />
-          <!-- Инпут для фото ресторана -->
-          <input
-            type="file"
-            @change="onPhotoChange"
-            accept="image/*"
-            class="input"
-          />
+
+        <h3 class="text-2xl font-bold mb-6 text-gray-900">{{ t('addRestaurant') }}</h3>
+        
+        <form @submit.prevent="onAddRestaurant" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('restaurantName') }}</label>
+            <input
+              v-model="newName"
+              type="text"
+              :placeholder="t('restaurantNamePlaceholder')"
+              class="input w-full"
+              required
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('address') }}</label>
+            <input
+              v-model="newAddress"
+              type="text"
+              :placeholder="t('addressPlaceholder')"
+              class="input w-full"
+              required
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('restaurantPhoto') }}</label>
+            <input
+              type="file"
+              @change="onPhotoChange"
+              accept="image/*"
+              class="input w-full"
+            />
+          </div>
+
           <button
             type="submit"
-            class="btn bg-green-600 hover:bg-green-500 text-white w-full"
+            class="btn-primary w-full"
             :disabled="loadingAdd"
           >
-            {{ loadingAdd ? 'Добавляем...' : 'Добавить' }}
-            /
-            {{ loadingAdd ? 'Adding...' : 'Add' }}
+            <svg v-if="loadingAdd" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+            </svg>
+            {{ loadingAdd ? t('adding') : t('addRestaurant') }}
           </button>
         </form>
       </div>
     </div>
 
-    <!-- Модалка добавления блюда -->
-    <div v-if="showAddDish" class="fixed inset-0 flex items-center justify-center bg-black/70 z-50">
-      <div
-        class="bg-white p-6 rounded-2xl w-full max-w-md shadow-lg relative overflow-y-auto"
-        style="max-height: 80vh;"
-      >
+    <!-- Add Dish Modal -->
+    <div v-if="showAddDish" class="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+      <div class="bg-white p-6 rounded-2xl w-full max-w-2xl shadow-xl relative mx-4 max-h-[90vh] overflow-y-auto">
         <button
           @click="showAddDish = false"
-          class="absolute top-2 right-3 text-2xl text-gray-400 hover:text-gray-600"
+          class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10"
         >
-          ×
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
         </button>
-        <h3 class="text-2xl font-bold mb-4 text-gray-900">
-          Добавить блюдо для {{ selectedRestaurantName }} / Add Dish for
-          {{ selectedRestaurantName }}
+
+        <h3 class="text-2xl font-bold mb-6 text-gray-900">
+          {{ t('addDishFor') }} {{ selectedRestaurantName }}
         </h3>
-        <form @submit.prevent="onAddDish" class="flex flex-col gap-3">
-          <input
-            v-model="dishNameEn"
-            type="text"
-            placeholder="Название (EN) / Name (EN)"
-            class="input"
-            required
-          />
-          <input
-            v-model="dishNameRu"
-            type="text"
-            placeholder="Название (RU) / Name (RU)"
-            class="input"
-            required
-          />
-          <input
-            v-model="dishNameTr"
-            type="text"
-            placeholder="Название (TR) / Name (TR)"
-            class="input"
-            required
-          />
-          <input
-            v-model="dishNameDe"
-            type="text"
-            placeholder="Название (DE) / Name (DE)"
-            class="input"
-            required
-          />
-          <input
-            v-model="dishDescriptionEn"
-            type="text"
-            placeholder="Описание (EN) / Description (EN)"
-            class="input"
-          />
-          <input
-            v-model="dishDescriptionRu"
-            type="text"
-            placeholder="Описание (RU) / Description (RU)"
-            class="input"
-          />
-          <input
-            v-model="dishDescriptionTr"
-            type="text"
-            placeholder="Описание (TR) / Description (TR)"
-            class="input"
-          />
-          <input
-            v-model="dishDescriptionDe"
-            type="text"
-            placeholder="Описание (DE) / Description (DE)"
-            class="input"
-          />
-          <input
-            v-model.number="dishPrice"
-            type="number"
-            placeholder="Цена / Price"
-            class="input"
-            required
-          />
-          <input
-            type="file"
-            @change="onImageChange"
-            class="input mb-2"
-            accept="image/*"
-          />
-          <div v-if="loadingAI" class="text-yellow-600 text-sm mb-2">
-            AI анализирует фото... / AI analyzing photo...
+        
+        <form @submit.prevent="onAddDish" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('nameEn') }}</label>
+              <input v-model="dishNameEn" type="text" class="input w-full" required />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('nameRu') }}</label>
+              <input v-model="dishNameRu" type="text" class="input w-full" required />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('nameTr') }}</label>
+              <input v-model="dishNameTr" type="text" class="input w-full" required />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('nameDe') }}</label>
+              <input v-model="dishNameDe" type="text" class="input w-full" required />
+            </div>
           </div>
-          <div v-if="errorAI" class="text-red-400 text-sm mb-2">{{ errorAI }}</div>
-          <input
-            v-model.number="dishCalories"
-            type="number"
-            placeholder="Калории / Calories"
-            class="input"
-            step="0.1"
-          />
-          <input
-            v-model.number="dishProtein"
-            type="number"
-            placeholder="Белки (г) / Protein (g)"
-            class="input"
-            step="0.1"
-          />
-          <input
-            v-model.number="dishFat"
-            type="number"
-            placeholder="Жиры (г) / Fat (g)"
-            class="input"
-            step="0.1"
-          />
-          <input
-            v-model.number="dishCarbs"
-            type="number"
-            placeholder="Углеводы (г) / Carbs (g)"
-            class="input"
-            step="0.1"
-          />
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('descriptionEn') }}</label>
+              <input v-model="dishDescriptionEn" type="text" class="input w-full" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('descriptionRu') }}</label>
+              <input v-model="dishDescriptionRu" type="text" class="input w-full" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('descriptionTr') }}</label>
+              <input v-model="dishDescriptionTr" type="text" class="input w-full" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('descriptionDe') }}</label>
+              <input v-model="dishDescriptionDe" type="text" class="input w-full" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('price') }}</label>
+              <input v-model.number="dishPrice" type="number" class="input w-full" required />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('dishPhoto') }}</label>
+              <input type="file" @change="onImageChange" class="input w-full" accept="image/*" />
+            </div>
+          </div>
+
+          <div v-if="loadingAI" class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div class="flex items-center gap-3">
+              <svg class="animate-spin h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+              </svg>
+              <span class="text-blue-700">{{ t('aiAnalyzing') }}</span>
+            </div>
+          </div>
+
+          <div v-if="errorAI" class="p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p class="text-red-700 text-sm">{{ errorAI }}</p>
+          </div>
+
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('calories') }}</label>
+              <input v-model.number="dishCalories" type="number" class="input w-full" step="0.1" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('protein') }}</label>
+              <input v-model.number="dishProtein" type="number" class="input w-full" step="0.1" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('fat') }}</label>
+              <input v-model.number="dishFat" type="number" class="input w-full" step="0.1" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('carbs') }}</label>
+              <input v-model.number="dishCarbs" type="number" class="input w-full" step="0.1" />
+            </div>
+          </div>
+
           <button
             type="submit"
-            class="btn bg-green-600 hover:bg-green-500 text-white w-full"
+            class="btn-primary w-full"
             :disabled="loadingAI"
           >
-            Добавить / Add
+            {{ t('addDish') }}
           </button>
         </form>
       </div>
     </div>
 
-    <!-- Модалка редактирования блюд -->
-    <div v-if="showEdit" class="fixed inset-0 flex items-center justify-center bg-black/70 z-50">
-      <div
-        class="bg-white p-6 rounded-2xl w-full max-w-2xl shadow-lg relative overflow-y-auto"
-        style="max-height: 80vh;"
-      >
+    <!-- Edit Dishes Modal -->
+    <div v-if="showEdit" class="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+      <div class="bg-white p-6 rounded-2xl w-full max-w-4xl shadow-xl relative mx-4 max-h-[90vh] overflow-y-auto">
         <button
           @click="showEdit = false"
-          class="absolute top-2 right-3 text-2xl text-gray-400 hover:text-gray-600"
+          class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10"
         >
-          ×
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
         </button>
-        <h3 class="text-2xl font-bold mb-4 text-gray-900">
-          Редактировать блюда для {{ selectedRestaurantName }} / Edit Dishes for
-          {{ selectedRestaurantName }}
+
+        <h3 class="text-2xl font-bold mb-6 text-gray-900">
+          {{ t('editDishesFor') }} {{ selectedRestaurantName }}
         </h3>
-        <div v-if="loadingEdit" class="text-yellow-600 text-center mb-4">
-          Загрузка блюд... / Loading dishes...
+
+        <div v-if="loadingEdit" class="flex items-center justify-center py-8">
+          <div class="flex items-center gap-3">
+            <svg class="animate-spin h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+            </svg>
+            <span class="text-gray-600">{{ t('loadingDishes') }}</span>
+          </div>
         </div>
-        <div v-if="errorEdit" class="text-red-400 text-center mb-4">{{ errorEdit }}</div>
-        <div
-          v-if="dishes.length === 0 && !loadingEdit"
-          class="text-gray-500 text-center mb-4"
-        >
-          Нет блюд для редактирования (restaurant_id: {{ selectedRestaurantId }})
-          / No dishes to edit (restaurant_id: {{ selectedRestaurantId }})
+
+        <div v-if="errorEdit" class="p-4 bg-red-50 border border-red-200 rounded-lg mb-4">
+          <p class="text-red-700">{{ errorEdit }}</p>
         </div>
-        <div v-for="(dish, index) in dishes" :key="dish.id" class="mb-6 p-4 bg-gray-50 rounded-lg">
-          <input
-            v-model="dish.name_en"
-            type="text"
-            placeholder="Название (EN) / Name (EN)"
-            class="input mb-2 w-full"
-            required
-          />
-          <input
-            v-model="dish.name_ru"
-            type="text"
-            placeholder="Название (RU) / Name (RU)"
-            class="input mb-2 w-full"
-            required
-          />
-          <input
-            v-model="dish.name_tr"
-            type="text"
-            placeholder="Название (TR) / Name (TR)"
-            class="input mb-2 w-full"
-            required
-          />
-          <input
-            v-model="dish.name_de"
-            type="text"
-            placeholder="Название (DE) / Name (DE)"
-            class="input mb-2 w-full"
-            required
-          />
-          <input
-            v-model="dish.description_en"
-            type="text"
-            placeholder="Описание (EN) / Description (EN)"
-            class="input mb-2 w-full"
-          />
-          <input
-            v-model="dish.description_ru"
-            type="text"
-            placeholder="Описание (RU) / Description (RU)"
-            class="input mb-2 w-full"
-          />
-          <input
-            v-model="dish.description_tr"
-            type="text"
-            placeholder="Описание (TR) / Description (TR)"
-            class="input mb-2 w-full"
-          />
-          <input
-            v-model="dish.description_de"
-            type="text"
-            placeholder="Описание (DE) / Description (DE)"
-            class="input mb-2 w-full"
-          />
-          <input
-            v-model.number="dish.price"
-            type="number"
-            placeholder="Цена / Price"
-            class="input mb-2 w-full"
-            required
-          />
-          <input
-            v-model="dish.image_url"
-            type="text"
-            placeholder="URL изображения / Image URL"
-            class="input mb-2 w-full"
-          />
-          <input
-            v-model.number="dish.calories"
-            type="number"
-            placeholder="Калории / Calories"
-            class="input mb-2 w-full"
-            step="0.1"
-          />
-          <input
-            v-model.number="dish.protein"
-            type="number"
-            placeholder="Белки (г) / Protein (g)"
-            class="input mb-2 w-full"
-            step="0.1"
-          />
-          <input
-            v-model.number="dish.fat"
-            type="number"
-            placeholder="Жиры (г) / Fat (g)"
-            class="input mb-2 w-full"
-            step="0.1"
-          />
-          <input
-            v-model.number="dish.carbs"
-            type="number"
-            placeholder="Углеводы (г) / Carbs (g)"
-            class="input mb-2 w-full"
-            step="0.1"
-          />
-          <button
-            @click="saveDishChanges(dish, index)"
-            class="btn bg-blue-600 hover:bg-blue-500 text-white w-full"
+
+        <div v-if="dishes.length === 0 && !loadingEdit" class="text-center py-8">
+          <p class="text-gray-600">{{ t('noDishesToEdit') }}</p>
+        </div>
+
+        <div v-else class="space-y-6">
+          <div
+            v-for="(dish, index) in dishes"
+            :key="dish.id"
+            class="bg-gray-50 rounded-lg p-6 border border-gray-200"
           >
-            Сохранить / Save
-          </button>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <input v-model="dish.name_en" :placeholder="t('nameEn')" class="input" required />
+              <input v-model="dish.name_ru" :placeholder="t('nameRu')" class="input" required />
+              <input v-model="dish.name_tr" :placeholder="t('nameTr')" class="input" required />
+              <input v-model="dish.name_de" :placeholder="t('nameDe')" class="input" required />
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <input v-model="dish.description_en" :placeholder="t('descriptionEn')" class="input" />
+              <input v-model="dish.description_ru" :placeholder="t('descriptionRu')" class="input" />
+              <input v-model="dish.description_tr" :placeholder="t('descriptionTr')" class="input" />
+              <input v-model="dish.description_de" :placeholder="t('descriptionDe')" class="input" />
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-4">
+              <input v-model.number="dish.price" :placeholder="t('price')" type="number" class="input" required />
+              <input v-model.number="dish.calories" :placeholder="t('calories')" type="number" class="input" step="0.1" />
+              <input v-model.number="dish.protein" :placeholder="t('protein')" type="number" class="input" step="0.1" />
+              <input v-model.number="dish.fat" :placeholder="t('fat')" type="number" class="input" step="0.1" />
+              <input v-model.number="dish.carbs" :placeholder="t('carbs')" type="number" class="input" step="0.1" />
+              <input v-model="dish.image_url" :placeholder="t('imageUrl')" class="input" />
+            </div>
+
+            <button
+              @click="saveDishChanges(dish, index)"
+              class="btn-primary"
+            >
+              {{ t('saveDish') }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Модалка настроек ресторана -->
-    <div v-if="showSettings" class="fixed inset-0 flex items-center justify-center bg-black/70 z-50">
-      <div
-        class="bg-white p-6 rounded-2xl w-full max-w-5xl shadow-lg relative overflow-y-auto"
-        style="max-height: 90vh;"
-      >
+    <!-- Settings Modal -->
+    <div v-if="showSettings" class="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+      <div class="bg-white p-6 rounded-2xl w-full max-w-6xl shadow-xl relative mx-4 max-h-[90vh] overflow-y-auto">
         <button
           @click="closeSettings"
-          class="absolute top-2 right-3 text-2xl text-gray-400 hover:text-gray-600"
+          class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors z-10"
         >
-          ×
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
         </button>
-        <h3 class="text-3xl font-bold mb-6 text-gray-900">
-          Настройки "{{ settingsName }}" / Settings for "{{ settingsName }}"
+
+        <h3 class="text-2xl font-bold mb-6 text-gray-900">
+          {{ t('settingsFor') }} "{{ settingsName }}"
         </h3>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- Левая колонка -->
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <!-- Analytics Cards -->
           <div class="space-y-6">
-            <!-- Карточка "Клиентов сегодня" -->
-            <div class="bg-gray-50 rounded-lg p-4">
-              <div class="text-xl font-semibold text-gray-900 mb-2">Клиентов сегодня</div>
-              <div class="text-4xl font-bold text-yellow-600">{{ clientsToday }}</div>
-              <div class="text-gray-500 text-sm">Клиентов сегодня</div>
+            <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-6 text-white">
+              <h4 class="text-lg font-semibold mb-2">{{ t('clientsToday') }}</h4>
+              <div class="text-3xl font-bold">{{ clientsToday }}</div>
             </div>
 
-            <!-- Карточка "Общая сумма заказов за сегодня" -->
-            <div class="bg-gray-50 rounded-lg p-4">
-              <div class="text-xl font-semibold text-gray-900 mb-2">Общая сумма заказов за сегодня</div>
-              <div class="text-4xl font-bold text-yellow-600">{{ totalSumToday }} ₽</div>
-              <div class="text-gray-500 text-sm">{{ averageCheck }} ₽ / средний чек</div>
+            <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-6 text-white">
+              <h4 class="text-lg font-semibold mb-2">{{ t('totalSumToday') }}</h4>
+              <div class="text-3xl font-bold">{{ totalSumToday }} ₽</div>
+              <div class="text-sm opacity-90">{{ t('averageCheck') }}: {{ averageCheck }} ₽</div>
             </div>
 
-            <!-- Карточка "Список клиентов/столов" -->
-            <div class="bg-gray-50 rounded-lg p-4 overflow-x-auto">
-              <div class="text-xl font-semibold text-gray-900 mb-2">Список клиентов/столов</div>
-              <table class="w-full table-auto text-left">
-                <thead>
-                  <tr class="border-b border-gray-200">
-                    <th class="py-2 px-1 text-gray-900">ID клиента</th>
-                    <th class="py-2 px-1 text-gray-900">Номер стола</th>
-                    <th class="py-2 px-1 text-gray-900">Статус</th>
-                    <th class="py-2 px-1 text-gray-900">Сумма</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="client in clientsList"
-                    :key="client.id"
-                    class="border-b border-gray-100"
-                  >
-                    <td class="py-2 px-1 text-gray-700">{{ client.id }}</td>
-                    <td class="py-2 px-1 text-gray-700">{{ client.table }}</td>
-                    <td class="py-2 px-1 text-gray-700">{{ client.status }}</td>
-                    <td class="py-2 px-1 text-gray-700">{{ client.sum }} ₽</td>
-                  </tr>
-                  <tr v-if="clientsList.length === 0">
-                    <td colspan="4" class="py-2 text-gray-500 text-center">
-                      Нет данных / No data
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Карточка "Рейтинг блюд" -->
-            <div class="bg-gray-50 rounded-lg p-4">
-              <div class="text-xl font-semibold text-gray-900 mb-2">Рейтинг блюд</div>
-              <div class="flex flex-col space-y-2">
-                <label class="flex items-center text-gray-700">
-                  <input
-                    type="checkbox"
-                    class="mr-2 accent-yellow-600"
-                    v-model="settings.showDishRating"
-                  />
-                  Отображать/не отображать
-                </label>
-                <button
-                  @click="resetAllDishRatings"
-                  class="btn bg-red-600 hover:bg-red-500 text-white mt-2"
-                >
-                  Сбросить рейтинг всех блюд / Reset all dish ratings
-                </button>
-                <label class="flex items-center text-gray-700 mt-2">
-                  <input
-                    type="checkbox"
-                    class="mr-2 accent-yellow-600"
-                    v-model="settings.showDishConfigurator"
-                  />
-                  Отображать конфигуратор блюд / Show dish configurator
-                </label>
-              </div>
-            </div>
-
-            <!-- Карточка "Настройки меню" -->
-            <div class="bg-gray-50 rounded-lg p-4">
-              <div class="text-xl font-semibold text-gray-900 mb-2">Настройки меню</div>
-              <div class="flex flex-col space-y-2 text-gray-700">
-                <label class="flex items-center">
-                  <input
-                    type="checkbox"
-                    class="mr-2 accent-yellow-600"
-                    v-model="settings.displayKBFU"
-                  />
-                  отображать КБЖУ
-                </label>
-                <label class="flex items-center">
-                  <input
-                    type="checkbox"
-                    class="mr-2 accent-yellow-600"
-                    v-model="settings.displayCookTime"
-                  />
-                  отображать время готовки
-                </label>
-                <label class="flex items-center">
-                  <input
-                    type="checkbox"
-                    class="mr-2 accent-yellow-600"
-                    v-model="settings.displayWeight"
-                  />
-                  отображать вес
-                </label>
-                <label class="flex items-center">
-                  <input
-                    type="checkbox"
-                    class="mr-2 accent-yellow-600"
-                    v-model="settings.displayNutritionalValue"
-                  />
-                  отображать пищ. ценность
-                </label>
-                <button
-                  @click="deleteMenu"
-                  class="btn bg-red-600 hover:bg-red-500 text-white mt-2"
-                >
-                  удалить меню / Delete menu
-                </button>
-                <button
-                  @click="scanPrintedMenu"
-                  class="btn bg-blue-600 hover:bg-blue-500 text-white mt-2"
-                >
-                  отсканировать печатное меню / Scan printed menu
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Правая колонка -->
-          <div class="space-y-6">
-            <!-- Карточка "Постоянные клиенты" -->
-            <div class="bg-gray-50 rounded-lg p-4">
-              <div class="text-xl font-semibold text-gray-900 mb-2">Постоянные клиенты</div>
-              <div class="flex items-center space-x-2 mb-2">
-                <span class="text-gray-700">Информировать о постоянных клиентах:</span>
-                <button
-                  @click="settings.loyalEnabled = true"
-                  :class="settings.loyalEnabled ? 'bg-yellow-600 text-white' : 'bg-gray-200 text-gray-700'"
-                  class="px-3 py-1 rounded-lg"
-                >
-                  Да
-                </button>
-                <button
-                  @click="settings.loyalEnabled = false"
-                  :class="!settings.loyalEnabled ? 'bg-yellow-600 text-white' : 'bg-gray-200 text-gray-700'"
-                  class="px-3 py-1 rounded-lg"
-                >
-                  Нет
-                </button>
-              </div>
-              <div class="flex flex-col space-y-2">
-                <div class="flex items-center space-x-2">
-                  <input
-                    v-model.number="settings.loyalVisits"
-                    type="number"
-                    min="0"
-                    placeholder="X визитов"
-                    class="input w-1/2"
-                  />
-                  <span class="text-gray-500">/</span>
-                  <input
-                    v-model.number="settings.loyalSum"
-                    type="number"
-                    min="0"
-                    placeholder="X суммы"
-                    class="input w-1/2"
-                  />
-                </div>
-                <button
-                  @click="saveSettings"
-                  class="btn bg-green-600 hover:bg-green-500 text-white mt-2"
-                >
-                  Сохранить настройки / Save Settings
-                </button>
-              </div>
-            </div>
-
-            <!-- Карточка "Меню и управление блюдами" -->
-            <div class="bg-gray-50 rounded-lg p-4">
-              <div class="flex items-center justify-between mb-2">
-                <div class="text-xl font-semibold text-gray-900">Меню и управление блюдами</div>
-                <button
-                  class="btn bg-blue-600 hover:bg-blue-500 text-white text-sm"
-                  @click="openAddDish(settingsRestaurantId)"
-                >
-                  + Добавить блюдо / + Add Dish
-                </button>
-              </div>
-              <div class="flex flex-col space-y-2">
-                <input
-                  v-model="newCategory"
-                  type="text"
-                  placeholder="Новая категория / New category"
-                  class="input"
-                />
-                <button
-                  @click="addCategory"
-                  class="btn bg-blue-600 hover:bg-blue-500 text-white"
-                >
-                  + Добавить категорию / + Add category
-                </button>
-              </div>
-            </div>
-
-            <!-- Карточка "Аналитика" -->
-            <div class="bg-gray-50 rounded-lg p-4">
-              <div class="text-xl font-semibold text-gray-900 mb-2">Апрель 2024 / April 2024</div>
+            <div class="bg-white border border-gray-200 rounded-lg p-6">
+              <h4 class="text-lg font-semibold mb-4 text-gray-900">{{ t('clientsList') }}</h4>
               <div class="overflow-x-auto">
-                <table class="w-full table-auto text-left">
+                <table class="w-full text-sm">
                   <thead>
                     <tr class="border-b border-gray-200">
-                      <th class="py-2 px-1 text-gray-900">Пн</th>
-                      <th class="py-2 px-1 text-gray-900">Вт</th>
-                      <th class="py-2 px-1 text-gray-900">Ср</th>
-                      <th class="py-2 px-1 text-gray-900">Чт</th>
-                      <th class="py-2 px-1 text-gray-900">Пт</th>
-                      <th class="py-2 px-1 text-gray-900">Сб</th>
-                      <th class="py-2 px-1 text-gray-900">Вс</th>
+                      <th class="text-left py-2 text-gray-600">{{ t('clientId') }}</th>
+                      <th class="text-left py-2 text-gray-600">{{ t('tableNumber') }}</th>
+                      <th class="text-left py-2 text-gray-600">{{ t('status') }}</th>
+                      <th class="text-left py-2 text-gray-600">{{ t('sum') }}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="week in analyticsCalendar" :key="week[0].date">
-                      <td
-                        v-for="day in week"
-                        :key="day.date"
-                        class="py-2 px-1 align-top h-28 border-b border-gray-100"
-                      >
-                        <div class="text-gray-900">{{ day.day }}</div>
-                        <div class="text-yellow-600 font-bold text-sm mt-1">{{ day.sum }} ₽</div>
-                      </td>
+                    <tr v-for="client in clientsList" :key="client.id" class="border-b border-gray-100">
+                      <td class="py-2 text-gray-900">{{ client.id }}</td>
+                      <td class="py-2 text-gray-900">{{ client.table }}</td>
+                      <td class="py-2 text-gray-900">{{ client.status }}</td>
+                      <td class="py-2 text-gray-900">{{ client.sum }} ₽</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
             </div>
+          </div>
 
-            <!-- Карточка "Брендирование" -->
-            <div class="bg-gray-50 rounded-lg p-4">
-              <div class="text-xl font-semibold text-gray-900 mb-2">Брендирование</div>
-              <div class="flex flex-col space-y-4">
-                <div>
-                  <label class="text-gray-700 mb-1 block">Логотип заведения / Restaurant Logo:</label>
+          <!-- Settings -->
+          <div class="space-y-6">
+            <div class="bg-white border border-gray-200 rounded-lg p-6">
+              <h4 class="text-lg font-semibold mb-4 text-gray-900">{{ t('menuSettings') }}</h4>
+              <div class="space-y-3">
+                <label class="flex items-center">
+                  <input type="checkbox" v-model="settings.displayKBFU" class="mr-3 accent-blue-600" />
+                  <span class="text-gray-700">{{ t('displayKBFU') }}</span>
+                </label>
+                <label class="flex items-center">
+                  <input type="checkbox" v-model="settings.displayCookTime" class="mr-3 accent-blue-600" />
+                  <span class="text-gray-700">{{ t('displayCookTime') }}</span>
+                </label>
+                <label class="flex items-center">
+                  <input type="checkbox" v-model="settings.displayWeight" class="mr-3 accent-blue-600" />
+                  <span class="text-gray-700">{{ t('displayWeight') }}</span>
+                </label>
+                <label class="flex items-center">
+                  <input type="checkbox" v-model="settings.showDishRating" class="mr-3 accent-blue-600" />
+                  <span class="text-gray-700">{{ t('showDishRating') }}</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="bg-white border border-gray-200 rounded-lg p-6">
+              <h4 class="text-lg font-semibold mb-4 text-gray-900">{{ t('loyalCustomers') }}</h4>
+              <div class="space-y-4">
+                <div class="flex items-center gap-4">
+                  <span class="text-gray-700">{{ t('enableLoyalProgram') }}:</span>
+                  <button
+                    @click="settings.loyalEnabled = true"
+                    :class="settings.loyalEnabled ? 'btn-primary' : 'btn-secondary'"
+                    class="text-sm px-3 py-1"
+                  >
+                    {{ t('yes') }}
+                  </button>
+                  <button
+                    @click="settings.loyalEnabled = false"
+                    :class="!settings.loyalEnabled ? 'btn-primary' : 'btn-secondary'"
+                    class="text-sm px-3 py-1"
+                  >
+                    {{ t('no') }}
+                  </button>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
                   <input
-                    type="file"
-                    @change="onLogoChange"
-                    accept="image/*"
+                    v-model.number="settings.loyalVisits"
+                    type="number"
+                    :placeholder="t('visits')"
+                    class="input"
+                  />
+                  <input
+                    v-model.number="settings.loyalSum"
+                    type="number"
+                    :placeholder="t('totalSum')"
                     class="input"
                   />
                 </div>
-                <div v-if="settings.brandLogoUrl" class="flex items-center space-x-4">
-                  <img
-                    :src="settings.brandLogoUrl"
-                    alt="Logo Preview"
-                    class="w-24 h-24 object-contain bg-gray-50 rounded-lg"
-                  />
-                  <button
-                    @click="removeLogo"
-                    class="btn bg-red-600 hover:bg-red-500 text-white"
-                  >
-                    Удалить логотип / Remove Logo
-                  </button>
-                </div>
-                <button
-                  @click="uploadLogo"
-                  class="btn bg-green-600 hover:bg-green-500 text-white"
-                >
-                  Загрузить логотип / Upload Logo
-                </button>
               </div>
             </div>
+
+            <div class="bg-white border border-gray-200 rounded-lg p-6">
+              <h4 class="text-lg font-semibold mb-4 text-gray-900">{{ t('branding') }}</h4>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('restaurantLogo') }}</label>
+                  <input type="file" @change="onLogoChange" accept="image/*" class="input" />
+                </div>
+                <div v-if="settings.brandLogoUrl" class="flex items-center gap-4">
+                  <img :src="settings.brandLogoUrl" alt="Logo" class="w-16 h-16 object-contain bg-gray-50 rounded-lg" />
+                  <button @click="removeLogo" class="btn-danger text-sm">{{ t('removeLogo') }}</button>
+                </div>
+                <button @click="uploadLogo" class="btn-primary">{{ t('uploadLogo') }}</button>
+              </div>
+            </div>
+
+            <button @click="saveSettings" class="btn-primary w-full">{{ t('saveSettings') }}</button>
           </div>
         </div>
       </div>
@@ -684,21 +555,47 @@
 import { ref, onMounted } from 'vue'
 import { supabase } from '@/supabase/client'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
-// Основное состояние
+const { t, locale } = useI18n()
+const router = useRouter()
+
+// Language management
+const showLangDropdown = ref(false)
+const currentLanguage = ref(locale.value)
+
+const languages = [
+  { code: 'en', label: 'English' },
+  { code: 'ru', label: 'Русский' },
+  { code: 'tr', label: 'Türkçe' },
+  { code: 'de', label: 'Deutsch' }
+]
+
+function getCurrentLanguageLabel() {
+  const lang = languages.find(l => l.code === currentLanguage.value)
+  return lang ? lang.label : 'English'
+}
+
+function selectLanguage(code) {
+  currentLanguage.value = code
+  locale.value = code
+  localStorage.setItem('lang', code)
+  showLangDropdown.value = false
+}
+
+// Main state
 const restaurants = ref([])
 const loading = ref(true)
 const loadingAdd = ref(false)
 const error = ref('')
-const router = useRouter()
 
-// Добавление ресторана
+// Add restaurant
 const showAdd = ref(false)
 const newName = ref('')
 const newAddress = ref('')
 const restaurantPhoto = ref(null)
 
-// Добавление блюда
+// Add dish
 const showAddDish = ref(false)
 const selectedRestaurantId = ref('')
 const selectedRestaurantName = ref('')
@@ -719,48 +616,47 @@ const dishCarbs = ref('')
 const loadingAI = ref(false)
 const errorAI = ref('')
 
-// Редактирование блюд
+// Edit dishes
 const showEdit = ref(false)
 const dishes = ref([])
 const loadingEdit = ref(false)
 const errorEdit = ref('')
 
-// Настройки ресторана
+// Settings
 const showSettings = ref(false)
 const settingsRestaurantId = ref('')
 const settingsName = ref('')
 const settings = ref({
-  // Loyal customers
   loyalEnabled: false,
   loyalVisits: 0,
   loyalSum: 0,
-  // Dish rating
   showDishRating: true,
   showDishConfigurator: false,
-  // Menu settings
   displayKBFU: false,
   displayCookTime: false,
   displayWeight: false,
   displayNutritionalValue: false,
-  // Branding
   brandLogoFile: null,
   brandLogoUrl: '',
 })
-// Данные для карточек аналитики и клиентов
-const clientsToday = ref(0)
-const totalSumToday = ref(0)
-const averageCheck = ref(0)
-const clientsList = ref([])
-const analyticsCalendar = ref([])
-const newCategory = ref('')
 
-// Получить публичный URL фото ресторана
+// Analytics data
+const clientsToday = ref(32)
+const totalSumToday = ref(102400)
+const averageCheck = ref(3200)
+const clientsList = ref([
+  { id: 101, table: 5, status: 'чек | вызов', sum: 3900 },
+  { id: 102, table: 3, status: 'чек | вызов', sum: 5600 },
+  { id: 103, table: 8, status: 'чек | вызов', sum: 2400 },
+  { id: 104, table: 2, status: 'чек | вызов', sum: 1200 }
+])
+
+// Functions
 function getRestaurantPhoto(photoPath) {
   if (!photoPath) return '/no-image.png'
   return supabase.storage.from('restaurants').getPublicUrl(photoPath).data.publicUrl
 }
 
-// Загрузка списка ресторанов
 async function fetchRestaurants() {
   loading.value = true
   error.value = ''
@@ -776,22 +672,22 @@ async function fetchRestaurants() {
     if (fetchError) throw fetchError
     restaurants.value = data || []
   } catch (err) {
-    error.value = 'Ошибка загрузки ресторанов: ' + err.message
+    error.value = t('errorLoadingRestaurants') + ': ' + err.message
   } finally {
     loading.value = false
   }
 }
 
-// При монтировании получаем список
-onMounted(fetchRestaurants)
+async function logout() {
+  await supabase.auth.signOut()
+  router.push('/admin/login')
+}
 
-// Обработка выбора фото для ресторана
 function onPhotoChange(e) {
   const file = e.target.files[0]
   if (file) restaurantPhoto.value = file
 }
 
-// Добавление ресторана
 async function onAddRestaurant() {
   loadingAdd.value = true
   error.value = ''
@@ -839,20 +735,18 @@ async function onAddRestaurant() {
     restaurantPhoto.value = null
     await fetchRestaurants()
   } catch (err) {
-    error.value = 'Ошибка добавления ресторана: ' + err.message
+    error.value = t('errorAddingRestaurant') + ': ' + err.message
   } finally {
     loadingAdd.value = false
   }
 }
 
-// Переход к странице меню ресторана
 function goToMenu(rest) {
   router.push(`/menu/${rest.id}`)
 }
 
-// Удаление ресторана
 async function deleteRestaurant(restaurantId) {
-  const confirmDelete = confirm('Вы уверены, что хотите удалить этот ресторан? / Are you sure you want to delete this restaurant?')
+  const confirmDelete = confirm(t('confirmDeleteRestaurant'))
   if (!confirmDelete) return
 
   try {
@@ -863,11 +757,10 @@ async function deleteRestaurant(restaurantId) {
     if (delError) throw delError
     await fetchRestaurants()
   } catch (err) {
-    alert('Ошибка удаления ресторана: ' + err.message)
+    alert(t('errorDeletingRestaurant') + ': ' + err.message)
   }
 }
 
-// Открытие модалки добавления блюда
 function openAddDish(restaurantId) {
   const restaurant = restaurants.value.find(r => r.id === restaurantId)
   if (restaurant) {
@@ -892,7 +785,6 @@ function openAddDish(restaurantId) {
   }
 }
 
-// Обработка фото для AI-анализа блюда
 async function onImageChange(e) {
   const file = e.target.files[0]
   if (!file) return
@@ -908,7 +800,7 @@ async function onImageChange(e) {
       body: formData
     })
 
-    if (!res.ok) throw new Error(`Ошибка API: ${res.status} - ${res.statusText}`)
+    if (!res.ok) throw new Error(`API Error: ${res.status} - ${res.statusText}`)
 
     const data = await res.json()
     dishNameEn.value = data.caption_en || ''
@@ -924,16 +816,15 @@ async function onImageChange(e) {
     dishFat.value = data.nutrition?.fat || ''
     dishCarbs.value = data.nutrition?.carbs || ''
   } catch (err) {
-    errorAI.value = 'Ошибка анализа изображения: ' + err.message
+    errorAI.value = t('errorAnalyzingImage') + ': ' + err.message
   } finally {
     loadingAI.value = false
   }
 }
 
-// Добавление блюда в базу
 async function onAddDish() {
   if (!dishImage.value) {
-    errorAI.value = 'Пожалуйста, загрузите изображение / Please upload an image'
+    errorAI.value = t('pleaseUploadImage')
     return
   }
 
@@ -946,7 +837,7 @@ async function onAddDish() {
       .from('dishes')
       .upload(`public/${fileName}`, dishImage.value)
 
-    if (uploadError) throw new Error('Ошибка загрузки изображения: ' + uploadError.message)
+    if (uploadError) throw new Error(t('errorUploadingImage') + ': ' + uploadError.message)
 
     const { publicUrl } = supabase.storage.from('dishes').getPublicUrl(`public/${fileName}`).data
 
@@ -973,13 +864,12 @@ async function onAddDish() {
     showAddDish.value = false
     await openEditRestaurant(selectedRestaurantId.value)
   } catch (err) {
-    errorAI.value = 'Ошибка добавления блюда: ' + err.message
+    errorAI.value = t('errorAddingDish') + ': ' + err.message
   } finally {
     loadingAI.value = false
   }
 }
 
-// Открытие модалки редактирования блюд
 async function openEditRestaurant(restaurantId) {
   const restaurant = restaurants.value.find(r => r.id === restaurantId)
   if (restaurant) {
@@ -995,7 +885,7 @@ async function openEditRestaurant(restaurantId) {
       if (fetchError) throw fetchError
       dishes.value = data || []
     } catch (err) {
-      errorEdit.value = 'Ошибка загрузки блюд: ' + err.message
+      errorEdit.value = t('errorLoadingDishes') + ': ' + err.message
     } finally {
       loadingEdit.value = false
       showEdit.value = true
@@ -1003,7 +893,6 @@ async function openEditRestaurant(restaurantId) {
   }
 }
 
-// Сохранение изменений блюда
 async function saveDishChanges(dish, index) {
   try {
     const { error: updateError } = await supabase
@@ -1026,16 +915,15 @@ async function saveDishChanges(dish, index) {
       })
       .eq('id', dish.id)
     if (updateError) throw updateError
-    errorEdit.value = 'Блюдо успешно обновлено! / Dish successfully updated!'
+    errorEdit.value = t('dishUpdatedSuccessfully')
     setTimeout(() => {
       errorEdit.value = ''
     }, 3000)
   } catch (err) {
-    errorEdit.value = 'Ошибка обновления блюда: ' + err.message
+    errorEdit.value = t('errorUpdatingDish') + ': ' + err.message
   }
 }
 
-// Открытие модалки настроек ресторана
 async function openSettings(restaurantId) {
   const restaurant = restaurants.value.find(r => r.id === restaurantId)
   if (!restaurant) return
@@ -1073,21 +961,17 @@ async function openSettings(restaurantId) {
     settings.value.displayNutritionalValue = data.display_nutritional_value
     settings.value.brandLogoUrl = data.brand_logo_url || ''
   } catch (err) {
-    console.warn('Не удалось загрузить настройки:', err.message)
+    console.warn('Could not load settings:', err.message)
   } finally {
     loadingEdit.value = false
-    loadClientsData(restaurantId)
-    loadAnalyticsData(restaurantId)
     showSettings.value = true
   }
 }
 
-// Закрытие модалки настроек
 function closeSettings() {
   showSettings.value = false
 }
 
-// Сохранение настроек ресторана
 async function saveSettings() {
   try {
     const {
@@ -1119,83 +1003,12 @@ async function saveSettings() {
       })
       .eq('id', settingsRestaurantId.value)
     if (updateError) throw updateError
-    alert('Настройки сохранены / Settings saved')
+    alert(t('settingsSaved'))
   } catch (err) {
-    alert('Ошибка сохранения настроек: ' + err.message)
+    alert(t('errorSavingSettings') + ': ' + err.message)
   }
 }
 
-// Сбросить рейтинг всех блюд
-async function resetAllDishRatings() {
-  const confirmReset = confirm('Вы уверены, что хотите сбросить рейтинг всех блюд? / Are you sure you want to reset all dish ratings?')
-  if (!confirmReset) return
-
-  try {
-    const { error: resetError } = await supabase
-      .from('dishes')
-      .update({ rating: null })
-      .eq('restaurant_id', settingsRestaurantId.value)
-    if (resetError) throw resetError
-    alert('Рейтинги блюд сброшены / All dish ratings reset')
-  } catch (err) {
-    alert('Ошибка сброса рейтинга блюд: ' + err.message)
-  }
-}
-
-// Удалить меню
-function deleteMenu() {
-  alert('Функция удаления меню пока не реализована / Delete menu not implemented yet')
-}
-
-// Отсканировать печатное меню
-function scanPrintedMenu() {
-  alert('Функция сканирования печатного меню пока не реализована / Scan printed menu not implemented yet')
-}
-
-// Загрузка списка клиентов и их данных
-function loadClientsData(restaurantId) {
-  clientsToday.value = 32
-  totalSumToday.value = 102400
-  averageCheck.value = 3200
-  clientsList.value = [
-    { id: 101, table: 5, status: 'чек | вызов', sum: 3900 },
-    { id: 102, table: 3, status: 'чек | вызов', sum: 5600 },
-    { id: 103, table: 8, status: 'чек | вызов', sum: 2400 },
-    { id: 104, table: 2, status: 'чек | вызов', sum: 1200 }
-  ]
-}
-
-// Загрузка данных аналитики
-function loadAnalyticsData(restaurantId) {
-  const april = []
-  const start = new Date(2024, 3, 1)
-  const startDay = new Date(start)
-  const dayOfWeek = startDay.getDay() || 7
-  startDay.setDate(startDay.getDate() - (dayOfWeek - 1))
-
-  for (let w = 0; w < 5; w++) {
-    const week = []
-    for (let d = 0; d < 7; d++) {
-      const date = new Date(startDay)
-      date.setDate(startDay.getDate() + w * 7 + d)
-      const month = date.getMonth()
-      const day = date.getDate()
-      let sum = ''
-      if (month === 3) {
-        sum = Math.floor(Math.random() * 100000 / 100) * 100
-      }
-      week.push({
-        date: date.toISOString().split('T')[0],
-        day,
-        sum: sum ? sum : ''
-      })
-    }
-    april.push(week)
-  }
-  analyticsCalendar.value = april
-}
-
-// Обработка загрузки логотипа
 function onLogoChange(e) {
   const file = e.target.files[0]
   if (!file) return
@@ -1203,10 +1016,9 @@ function onLogoChange(e) {
   settings.value.brandLogoUrl = URL.createObjectURL(file)
 }
 
-// Загрузка логотипа в хранилище
 async function uploadLogo() {
   if (!settings.value.brandLogoFile) {
-    alert('Пожалуйста, выберите файл логотипа / Please select a logo file')
+    alert(t('pleaseSelectLogoFile'))
     return
   }
   try {
@@ -1228,16 +1040,15 @@ async function uploadLogo() {
       .eq('id', settingsRestaurantId.value)
     if (updateError) throw updateError
 
-    alert('Логотип сохранен / Logo uploaded')
+    alert(t('logoUploaded'))
   } catch (err) {
-    alert('Ошибка загрузки логотипа: ' + err.message)
+    alert(t('errorUploadingLogo') + ': ' + err.message)
   }
 }
 
-// Удалить логотип
 async function removeLogo() {
   if (!settings.value.brandLogoUrl) return
-  const confirmRemove = confirm('Удалить логотип? / Remove logo?')
+  const confirmRemove = confirm(t('confirmRemoveLogo'))
   if (!confirmRemove) return
 
   try {
@@ -1249,36 +1060,45 @@ async function removeLogo() {
 
     settings.value.brandLogoUrl = ''
     settings.value.brandLogoFile = null
-    alert('Логотип удален / Logo removed')
+    alert(t('logoRemoved'))
   } catch (err) {
-    alert('Ошибка удаления логотипа: ' + err.message)
+    alert(t('errorRemovingLogo') + ': ' + err.message)
   }
 }
 
-// Добавление категории меню
-function addCategory() {
-  if (!newCategory.value.trim()) {
-    alert('Введите название категории / Please enter a category name')
-    return
-  }
-  alert(`Категория "${newCategory.value}" добавлена / Category "${newCategory.value}" added`)
-  newCategory.value = ''
-}
+onMounted(fetchRestaurants)
 </script>
 
 <style scoped>
-.btn {
-  @apply font-bold rounded-xl py-2 px-4 transition shadow;
+.btn-primary {
+  @apply bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg py-2 px-4 transition-colors duration-200 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed;
 }
+
+.btn-secondary {
+  @apply bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-lg py-2 px-4 transition-colors duration-200;
+}
+
+.btn-success {
+  @apply bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg py-2 px-4 transition-colors duration-200;
+}
+
+.btn-warning {
+  @apply bg-yellow-600 hover:bg-yellow-700 text-white font-semibold rounded-lg py-2 px-4 transition-colors duration-200;
+}
+
+.btn-info {
+  @apply bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg py-2 px-4 transition-colors duration-200;
+}
+
+.btn-danger {
+  @apply bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg py-2 px-4 transition-colors duration-200;
+}
+
 .input {
-  @apply bg-gray-50 text-gray-900 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 transition border border-gray-200;
+  @apply bg-gray-50 border border-gray-300 text-gray-900 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200;
 }
-.rest-photo {
-  width: 60px;
-  height: 60px;
-  object-fit: cover;
-  border-radius: 14px;
-  background: #f3f4f6;
-  margin-right: 16px;
+
+.input:focus {
+  @apply bg-white;
 }
 </style>
